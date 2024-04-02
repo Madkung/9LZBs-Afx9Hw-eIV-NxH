@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>สุ่มโจทย์การบวก ลบ คูณ และหาร</title>
+    <style>
+        body {
+            font-family: 'Mitr', sans-serif;
+            text-align: center;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 0;
+        }
+        h2 {
+            color: #333;
+        }
+        #problem {
+            margin-bottom: 20px;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        label {
+            font-weight: bold;
+        }
+        input[type="text"] {
+            padding: 8px;
+            font-size: 16px;
+        }
+        .button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #ff0000;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            font-family: 'Mitr', sans-serif;
+        }
+        .button:hover {
+            background-color: #ff0000;
+        }
+        #result {
+            margin-bottom: 20px;
+        }
+
+        canvas {
+            border: 1px solid black;
+            touch-action: none;
+            margin: auto;
+            display: block;
+            background-color: white;
+            width: 80vw;
+            height: 80vh;
+        }
+
+        button {
+            padding: 15px 25px;
+            font-size: 18px;
+            font-family: 'Mitr', sans-serif;
+        }
+
+        footer {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <h2>สุ่มโจทย์การบวก ลบ คูณ และหาร</h2>
+    <div id="problem"></div>
+    <form id="answerForm">
+        <label for="answer">คำตอบ:</label>
+        <input type="text" id="answer" name="answer">
+        <button class="button" type="submit">ส่งคำตอบ</button>
+    </form>
+
+    <div id="result"></div>
+
+    <button id="nextButton" class="button" style="display:none;">ข้อถัดไป</button>
+    <button id="showAnswerButton" class="button" style="display:none;">แสดงเฉลย</button>
+
+    <h2>ทด</h2>
+    <canvas id="myCanvas"></canvas>
+    <button id="penButton" style="margin-right: 10px;">✎ ดินสอ</button>
+    <button id="eraserButton">⌫ ยางลบ</button>
+
+    <footer>
+        Made by Muhammadkhodre
+    </footer>
+
+    <script>
+        var num1, num2, operation, operationString, correctAnswer;
+
+        function generateProblem() {
+            operation = Math.floor(Math.random() * 4); // 0: Addition, 1: Subtraction, 2: Multiplication, 3: Division
+
+            switch(operation) {
+                case 0:
+                    num1 = Math.floor(Math.random() * 100) + 1;
+                    num2 = Math.floor(Math.random() * 100) + 1;
+                    correctAnswer = num1 + num2;
+                    operationString = " + ";
+                    break;
+                case 1:
+                    num1 = Math.floor(Math.random() * 100) + 1;
+                    num2 = Math.floor(Math.random() * 100) + 1;
+                    correctAnswer = num1 - num2;
+                    operationString = " - ";
+                    break;
+                case 2:
+                    num1 = Math.floor(Math.random() * 10) + 1;
+                    num2 = Math.floor(Math.random() * 10) + 1;
+                    correctAnswer = num1 * num2;
+                    operationString = " × ";
+                    break;
+                case 3:
+                    num2 = Math.floor(Math.random() * 9) + 1; // non-zero divisor
+                    num1 = num2 * (Math.floor(Math.random() * 10) + 1);
+                    correctAnswer = num1 / num2;
+                    operationString = " ÷ ";
+                    break;
+                default:
+                    break;
+            }
+
+            var problemElement = document.getElementById("problem");
+            problemElement.innerHTML = "<p>" + num1 + operationString + num2 + " = ?</p>";
+        }
+
+        generateProblem();
+
+        var answerForm = document.getElementById("answerForm");
+        var resultElement = document.getElementById("result");
+        var nextButton = document.getElementById("nextButton");
+        var showAnswerButton = document.getElementById("showAnswerButton");
+
+        answerForm.addEventListener("submit", function(event) {
+            event.preventDefault();
+            var answer = parseFloat(document.getElementById("answer").value);
+
+            if (answer === correctAnswer) {
+                resultElement.innerHTML = "<p>ถูกต้อง!</p>";
+                nextButton.style.display = "block";
+                showAnswerButton.style.display = "none";
+            } else {
+                resultElement.innerHTML = "<p>ผิด.</p>";
+                showAnswerButton.style.display = "block";
+            }
+        });
+
+        nextButton.addEventListener("click", function() {
+            generateProblem();
+            resultElement.innerHTML = "";
+            document.getElementById("answer").value = "";
+            nextButton.style.display = "none";
+            showAnswerButton.style.display = "none";
+        });
+
+        showAnswerButton.addEventListener("click", function() {
+            resultElement.innerHTML = "<p>เฉลยคือ " + correctAnswer + ".</p>";
+            showAnswerButton.style.display = "none";
+            nextButton.style.display = "block";
+        });
+
+        var canvas = document.getElementById('myCanvas');
+        var ctx = canvas.getContext('2d');
+        var painting = false;
+        var eraserMode = false;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        resizeCanvas(); 
+        window.addEventListener('resize', resizeCanvas); 
+
+        canvas.addEventListener('touchstart', function(e) {
+            painting = true;
+            draw(e.touches[0].clientX, e.touches[0].clientY, false);
+        });
+
+        canvas.addEventListener('touchmove', function(e) {
+            if (painting) {
+                draw(e.touches[0].clientX, e.touches[0].clientY, true);
+            }
+        });
+
+        canvas.addEventListener('touchend', function() {
+            painting = false;
+        });
+
+        document.getElementById('penButton').addEventListener('click', function() {
+            eraserMode = false;
+        });
+
+        document.getElementById('eraserButton').addEventListener('click', function() {
+            eraserMode = true;
+        });
+
+        function draw(x, y, isDrawing) {
+            if (!isDrawing) {
+                ctx.beginPath();
+            }
+            ctx.lineWidth = eraserMode ? 20 : 5;
+            ctx.lineCap = 'round';
+            if (eraserMode) {
+                ctx.strokeStyle = 'white';
+            } else {
+                ctx.strokeStyle = 'black';
+            }
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            if (!isDrawing) {
+                ctx.closePath();
+            }
+        }
+    </script>
+</body>
+</html>
